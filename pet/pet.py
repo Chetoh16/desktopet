@@ -11,15 +11,25 @@ class PetState(Enum):
     WAITING = "waiting"
     WALKING_LEFT = "walking_left"
     WALKING_RIGHT = "walking_right"
+    RUNNING = "running"
+
+
 
 SCALE = 4
 BASE_SIZE = 64
 PET_SIZE = BASE_SIZE * SCALE 
-
-
     
 
-# Add boolean running for increasing speed 
+class MovementController:
+    SPEED_MAP = {PetState.WALKING_LEFT: 1, PetState.WALKING_RIGHT: 1, PetState.RUNNING: 3}
+
+    def get_speed(self, state):
+        return self.SPEED_MAP.get(state, 0)    
+
+class Direction(Enum):
+    LEFT = -1
+    RIGHT = 1
+
 
 class Pet():
     # constructor for pet
@@ -50,6 +60,10 @@ class Pet():
             PetState.WALKING_RIGHT: self.walking_right_frames
         }
         
+        self.movement = MovementController()
+
+         # 1:right, -1:left
+        self.direction = Direction.RIGHT 
 
         # use a colour that's not in the sprite in order to make the background transparent
         TRANSPARENT_COLOUR = "#ff00ff"
@@ -74,38 +88,18 @@ class Pet():
 
         # give window to geometry manager (so it will appear)
         self.label.pack()
+        
+        # INTERACTIONS
 
-        self.window.after(3000, lambda: self.set_state(PetState.WAITING))
+        # Bind left button events for drag and click distinction
+        self.label.bind("<ButtonPress-1>", self.move_right)
+        #self.label.bind("<B1-Motion>", self.do_drag)
+        #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
 
         # run self.update() after 0ms when mainloop starts
         self.window.after(0, self.update)
         self.window.mainloop() 
 
-    def update(self):
-        
-        # array of frames for the current state
-        frames = self.animations[self.state]
-
-        # get the next frame index, looping back to 0 if we reach the end of the array
-        self.frame_index = (self.frame_index+1) % len(frames)
-
-        # get the current frame to display
-        current_frame = frames[self.frame_index]
-
-        # update the label with the current frame 
-        self.label.configure(image=current_frame)
-
-        # update the label's image attribute to the current frame to prevent it from being garbage collected
-        # tkinter does not keep a reference to the image, so we need to do it ourselves (bad)
-        self.label.image = current_frame 
-
-        # create the window
-        self.pet_width = current_frame.width()
-        self.pet_height = current_frame.height()
-        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
-
-        # call update again after X ms (for example 100ms = 10fps)
-        self.window.after(100, self.update)
     
     # function to load frames for animation
     def load_frames(self,folder,state_name,amount, scale=SCALE):
@@ -137,6 +131,41 @@ class Pet():
              # reset frame index when state changes so that the animation starts from the beginning
             self.frame_index = 0 
     
+    def move_right(self, event):
+        self.set_state(PetState.WALKING_RIGHT)
+        self.direction = Direction.RIGHT
+
+        #while self.x < self.window.winfo_screenwidth() - PET_SIZE:
+            #speed = self.movement.get_speed(self.state)
+            #self.x += speed * self.direction.value
+    
+    def update(self):
+        
+        # array of frames for the current state
+        frames = self.animations[self.state]
+
+        # get the next frame index, looping back to 0 if we reach the end of the array
+        self.frame_index = (self.frame_index+1) % len(frames)
+
+        # get the current frame to display
+        current_frame = frames[self.frame_index]
+
+        # update the label with the current frame 
+        self.label.configure(image=current_frame)
+
+        # update the label's image attribute to the current frame to prevent it from being garbage collected
+        # tkinter does not keep a reference to the image, so we need to do it ourselves (bad)
+        self.label.image = current_frame 
+
+        # create the window
+        self.pet_width = current_frame.width()
+        self.pet_height = current_frame.height()
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
+
+        # call update again after X ms (for example 100ms = 10fps)
+        self.window.after(200, self.update)
+        
+
     
 
     
