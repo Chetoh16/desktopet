@@ -21,7 +21,7 @@ PET_SIZE = BASE_SIZE * SCALE
     
 
 class MovementController:
-    SPEED_MAP = {PetState.WALKING_LEFT: 1, PetState.WALKING_RIGHT: 1, PetState.RUNNING: 3}
+    SPEED_MAP = {PetState.WALKING_LEFT: 2, PetState.WALKING_RIGHT: 2, PetState.RUNNING: 6}
 
     def get_speed(self, state):
         return self.SPEED_MAP.get(state, 0)    
@@ -51,6 +51,10 @@ class Pet():
 
         # current frame of the animation, used to cycle through frames
         self.frame_index = 0
+
+        self.frame_delay = 40
+        self.animation_counter = 0
+        self.animation_speed = 3   # Change frame every 3 updates
 
         # dictionary to hold the frames for each state
         self.animations = {
@@ -96,8 +100,8 @@ class Pet():
         #self.label.bind("<B1-Motion>", self.do_drag)
         #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
 
-        # run self.update() after 0ms when mainloop starts
-        self.window.after(0, self.update)
+        # run self.update() after the frame delay when mainloop starts
+        self.window.after(self.frame_delay, self.update)
         self.window.mainloop() 
 
     
@@ -130,25 +134,25 @@ class Pet():
 
              # reset frame index when state changes so that the animation starts from the beginning
             self.frame_index = 0 
+            self.animation_counter = 0
+
+            self.update_animations()
     
     def move_right(self, event):
         self.set_state(PetState.WALKING_RIGHT)
         self.direction = Direction.RIGHT
 
-        #while self.x < self.window.winfo_screenwidth() - PET_SIZE:
-            #speed = self.movement.get_speed(self.state)
-            #self.x += speed * self.direction.value
     
     def update_animations(self):
 
         # array of frames for the current state
         frames = self.animations[self.state]
-
-        # get the next frame index, looping back to 0 if we reach the end of the array
-        self.frame_index = (self.frame_index+1) % len(frames)
-
+        
         # get the current frame to display
         current_frame = frames[self.frame_index]
+
+        # get the next frame index, looping back to 0 if we reach the end of the array
+        self.frame_index = (self.frame_index + 1) % len(frames)
 
         # update the label with the current frame 
         self.label.configure(image=current_frame)
@@ -159,13 +163,23 @@ class Pet():
 
 
     def update(self):
-        
-        self.update_animations()
 
+        speed = self.movement.get_speed(self.state)
+
+        if self.state == PetState.WALKING_RIGHT:
+            if self.x < self.window.winfo_screenwidth() - PET_SIZE:
+                self.x += speed * self.direction.value
+        
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
+                
+        self.animation_counter += 1
+
+        if self.animation_counter >= self.animation_speed:
+            self.animation_counter = 0
+            self.update_animations()
 
         # call update again after X ms (for example 100ms = 10fps)
-        self.window.after(200, self.update)
+        self.window.after(self.frame_delay, self.update)
         
 
     
