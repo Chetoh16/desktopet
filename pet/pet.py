@@ -1,8 +1,18 @@
 import tkinter as tk
 import time
+from enum import Enum
 
 
-# self.frames = ["frame1.png", "frame2.png"]
+
+class PetState(Enum):
+    IDLE = "idle"
+    WAITING = "waiting"
+    WALKING_LEFT = "walking_left"
+    WALKING_RIGHT = "walking_right"
+    
+
+# Add boolean running for increasing speed 
+
 class Pet():
     # constructor for pet
     def __init__(self):
@@ -17,6 +27,14 @@ class Pet():
         self.crossed_arms_idle_frames = self.load_frames("assets/crossed_arms_idle", "idle_detective", 2)
         self.walking_left_frames = self.load_frames("assets/walking_left", "walking_left", 7)
         self.walking_right_frames = self.load_frames("assets/walking_right", "walking_right", 7)
+
+        self.state = PetState.IDLE
+        self.current_frame = 0
+        self.animations = [
+            (PetState.IDLE, self.default_idle_frames),
+            (PetState.WAITING, self.crossed_arms_idle_frames),
+            (PetState.RUNNING, self.walking_right_frames)
+        ]
 
         # placeholder
         self.img = tk.PhotoImage(file="assets/default_idle/spr_idle_default_det1.png")
