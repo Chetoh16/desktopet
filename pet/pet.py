@@ -139,8 +139,8 @@ class Pet():
             #speed = self.movement.get_speed(self.state)
             #self.x += speed * self.direction.value
     
-    def update(self):
-        
+    def update_animations(self):
+
         # array of frames for the current state
         frames = self.animations[self.state]
 
@@ -157,9 +157,11 @@ class Pet():
         # tkinter does not keep a reference to the image, so we need to do it ourselves (bad)
         self.label.image = current_frame 
 
-        # create the window
-        self.pet_width = current_frame.width()
-        self.pet_height = current_frame.height()
+
+    def update(self):
+        
+        self.update_animations()
+
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
 
         # call update again after X ms (for example 100ms = 10fps)
