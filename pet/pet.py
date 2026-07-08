@@ -1,6 +1,8 @@
 import tkinter as tk
 import time
 from enum import Enum
+from PIL import Image, ImageTk
+
 
 
 
@@ -9,6 +11,10 @@ class PetState(Enum):
     WAITING = "waiting"
     WALKING_LEFT = "walking_left"
     WALKING_RIGHT = "walking_right"
+
+BASE_SIZE = 64
+SCALE = 2
+PET_SIZE = BASE_SIZE * SCALE
     
 
 # Add boolean running for increasing speed 
@@ -58,12 +64,14 @@ class Pet():
         # create a label as a container for our image
         self.label = tk.Label(self.window, bd=0, bg='black')
 
-        # create a window of size 64x64 pixels, at coordinates 0,0
+        # create a window of size  64x64+{x}+0 = pixel size 64x64 at coordinates 0,0
         self.x = 0
-        self.window.geometry('64x64+{x}+0'.format(x=str(self.x)))
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
 
         # give window to geometry manager (so it will appear)
         self.label.pack()
+
+        self.window.after(3000, lambda: self.set_state(PetState.WAITING))
 
         # run self.update() after 0ms when mainloop starts
         self.window.after(0, self.update)
@@ -73,7 +81,6 @@ class Pet():
         
         # array of frames for the current state
         frames = self.animations[self.state]
-        print("Current state:", self.state, "Frame index:", self.frame_index, "Total frames:", len(frames))
 
         # get the next frame index, looping back to 0 if we reach the end of the array
         self.frame_index = (self.frame_index+1) % len(frames)
@@ -88,21 +95,32 @@ class Pet():
         # tkinter does not keep a reference to the image, so we need to do it ourselves (bad)
         self.label.image = current_frame 
 
-
         # create the window
-        self.window.geometry('64x64+{x}+0'.format(x=str(self.x)))
-
-        self.window.after(3000, lambda: self.set_state(PetState.WAITING))
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
 
         # call update again after X ms (for example 100ms = 10fps)
         self.window.after(100, self.update)
     
     # function to load frames for animation
-    def load_frames(self,folder,state_name,amount):
+    def load_frames(self,folder,state_name,amount, scale=SCALE):
         frames = []
+
         # range starts at 0, so we add 1 to i to get the correct frame number
         for i in range(amount):
-            frames.append(tk.PhotoImage(file=f"{folder}/spr_{state_name}{i+1}.png"))
+
+            path = f"{folder}/spr_{state_name}{i+1}.png"
+
+            # load the image using PIL
+            image = Image.open(path)
+
+            # get new size
+            new_size = (image.width * scale, image.height * scale)
+
+            # resize image
+            image = image.resize(new_size, Image.NEAREST)
+
+            # convert the image to a PhotoImage object
+            frames.append(ImageTk.PhotoImage(image))
         return frames
     
     def set_state(self, new_state):
