@@ -12,9 +12,11 @@ class PetState(Enum):
     WALKING_LEFT = "walking_left"
     WALKING_RIGHT = "walking_right"
 
+SCALE = 4
 BASE_SIZE = 64
-SCALE = 2
-PET_SIZE = BASE_SIZE * SCALE
+PET_SIZE = BASE_SIZE * SCALE 
+
+
     
 
 # Add boolean running for increasing speed 
@@ -49,8 +51,10 @@ class Pet():
         }
         
 
-        # set focushighlight to black when the window does not have focus
-        self.window.config(highlightbackground='black')
+        # use a colour that's not in the sprite in order to make the background transparent
+        TRANSPARENT_COLOUR = "#ff00ff"
+
+        self.window.config(bg=TRANSPARENT_COLOUR)
 
         # make window frameless
         self.window.overrideredirect(True)
@@ -58,13 +62,13 @@ class Pet():
         # make window draw over all others
         self.window.attributes('-topmost', True)
 
-        # turn black into transparency
-        self.window.wm_attributes('-transparentcolor', 'black')
+        # turn background transparent
+        self.window.wm_attributes('-transparentcolor', TRANSPARENT_COLOUR)
 
         # create a label as a container for our image
-        self.label = tk.Label(self.window, bd=0, bg='black')
+        self.label = tk.Label(self.window, bd=0, bg=TRANSPARENT_COLOUR)
 
-        # create a window of size  64x64+{x}+0 = pixel size 64x64 at coordinates 0,0
+        # create a window -> 64x64+{x}+0 = pixel size 64x64 at coordinates 0,0
         self.x = 0
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
 
@@ -96,6 +100,8 @@ class Pet():
         self.label.image = current_frame 
 
         # create the window
+        self.pet_width = current_frame.width()
+        self.pet_height = current_frame.height()
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
 
         # call update again after X ms (for example 100ms = 10fps)
