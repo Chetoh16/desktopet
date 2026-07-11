@@ -1,3 +1,4 @@
+import random
 import tkinter as tk
 import time
 from enum import Enum
@@ -11,15 +12,27 @@ class PetState(Enum):
     WAITING = "waiting"
     WALKING_LEFT = "walking_left"
     WALKING_RIGHT = "walking_right"
+    RUNNING = "running"
+
+
 
 SCALE = 4
 BASE_SIZE = 64
 PET_SIZE = BASE_SIZE * SCALE 
-
-
     
 
-# Add boolean running for increasing speed 
+class MovementController:
+    SPEED_MAP = {PetState.WALKING_LEFT: 10, PetState.WALKING_RIGHT: 10, PetState.RUNNING: 15}
+
+    def get_speed(self, state):
+        # 0 is the default speed if the state is not in the SPEED_MAP
+        # therefore do not need to define IDLE speed
+        return self.SPEED_MAP.get(state, 0)    
+
+class Direction(Enum):
+    LEFT = -1
+    RIGHT = 1
+
 
 class Pet():
     # constructor for pet
@@ -37,10 +50,25 @@ class Pet():
         self.walking_left_frames = self.load_frames("assets/walking_left", "walking_left", 7)
         self.walking_right_frames = self.load_frames("assets/walking_right", "walking_right", 7)
 
+        # this is used to lock in a state to prevent states flickering uncontrollably
+        # problem is called Uncached Per-Tick Updates
+        self.timer_scheduled = False
+
         self.state = PetState.IDLE
 
         # current frame of the animation, used to cycle through frames
         self.frame_index = 0
+
+        self.frame_delay = 40
+        self.animation_counter = 0
+        self.animation_speed = {
+            PetState.IDLE: 12,
+            PetState.WAITING: 12,
+            PetState.WALKING_LEFT: 2,
+            PetState.WALKING_RIGHT: 2,
+            PetState.RUNNING: 2
+        }
+
 
         # dictionary to hold the frames for each state
         self.animations = {
@@ -50,6 +78,10 @@ class Pet():
             PetState.WALKING_RIGHT: self.walking_right_frames
         }
         
+        self.movement = MovementController()
+
+         # 1:right, -1:left
+        self.direction = Direction.RIGHT 
 
         # use a colour that's not in the sprite in order to make the background transparent
         TRANSPARENT_COLOUR = "#ff00ff"
@@ -74,38 +106,19 @@ class Pet():
 
         # give window to geometry manager (so it will appear)
         self.label.pack()
+        
+        # INTERACTIONS
 
-        self.window.after(3000, lambda: self.set_state(PetState.WAITING))
+        # Bind left button events for drag and click distinction
+        self.label.bind("<ButtonPress-1>", self.move_right)
+        #self.label.bind("<B1-Motion>", self.do_drag)
+        #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
 
-        # run self.update() after 0ms when mainloop starts
-        self.window.after(0, self.update)
+        # run self.update() after the frame delay when mainloop starts
+        self.window.after(self.frame_delay, self.update)
+
         self.window.mainloop() 
 
-    def update(self):
-        
-        # array of frames for the current state
-        frames = self.animations[self.state]
-
-        # get the next frame index, looping back to 0 if we reach the end of the array
-        self.frame_index = (self.frame_index+1) % len(frames)
-
-        # get the current frame to display
-        current_frame = frames[self.frame_index]
-
-        # update the label with the current frame 
-        self.label.configure(image=current_frame)
-
-        # update the label's image attribute to the current frame to prevent it from being garbage collected
-        # tkinter does not keep a reference to the image, so we need to do it ourselves (bad)
-        self.label.image = current_frame 
-
-        # create the window
-        self.pet_width = current_frame.width()
-        self.pet_height = current_frame.height()
-        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
-
-        # call update again after X ms (for example 100ms = 10fps)
-        self.window.after(100, self.update)
     
     # function to load frames for animation
     def load_frames(self,folder,state_name,amount, scale=SCALE):
@@ -136,7 +149,88 @@ class Pet():
 
              # reset frame index when state changes so that the animation starts from the beginning
             self.frame_index = 0 
+            self.animation_counter = 0
+
+            self.update_animations()
     
+    def move_right(self, event):
+        self.set_state(PetState.WALKING_RIGHT)
+        self.direction = Direction.RIGHT
+
+    
+    def update_animations(self):
+
+        # array of frames for the current state
+        frames = self.animations[self.state]
+        
+        # get the current frame to display
+        current_frame = frames[self.frame_index]
+
+        # get the next frame index, looping back to 0 if we reach the end of the array
+        self.frame_index = (self.frame_index + 1) % len(frames)
+
+        # update the label with the current frame 
+        self.label.configure(image=current_frame)
+
+        # update the label's image attribute to the current frame to prevent it from being garbage collected
+        # tkinter does not keep a reference to the image, so we need to do it ourselves (bad)
+        self.label.image = current_frame 
+
+    def transition(self, new_state):
+        self.set_state(new_state)
+
+        # open the gate for the new state
+        self.timer_scheduled = False
+
+    def update(self):
+
+        speed = self.movement.get_speed(self.state)
+
+        # EVENTS
+
+        # Walking Right
+        if self.state == PetState.WALKING_RIGHT:
+            if self.x < self.window.winfo_screenwidth() - PET_SIZE:
+                self.x += speed * self.direction.value
+
+        # Walking Left
+        elif self.state == PetState.WALKING_LEFT:
+            if self.x > 0:
+                self.x += speed * self.direction.value
+        
+        # Cross Arms TO Idle
+        elif self.state == PetState.WAITING:
+            if not self.timer_scheduled:
+
+                # lock the gate to prevent constant state changes
+                self.timer_scheduled = True
+                random_time = random.randint(5, 10) * 1000
+                self.window.after(random_time, lambda: self.transition(PetState.IDLE))
+
+        # Idle to Cross Arms
+        elif self.state == PetState.IDLE:
+            if not self.timer_scheduled:
+
+                # lock the gate to prevent constant state changes
+                self.timer_scheduled = True
+                random_time = random.randint(5, 10) * 1000
+                self.window.after(random_time, lambda: self.transition(PetState.WAITING))
+
+        
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
+                
+        self.animation_counter += 1
+
+        animation_speed = self.animation_speed.get(self.state, 3)
+
+        if self.animation_counter >= animation_speed:
+            self.animation_counter = 0
+            self.update_animations()
+
+        # call update again after X ms (for example 100ms = 10fps)
+        self.window.after(self.frame_delay, self.update)
+        
+
     
 
     
