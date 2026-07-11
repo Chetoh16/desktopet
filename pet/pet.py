@@ -29,10 +29,15 @@ class MovementController:
         # therefore do not need to define IDLE speed
         return self.SPEED_MAP.get(state, 0)    
 
+    
+
 class Direction(Enum):
     LEFT = -1
     RIGHT = 1
 
+class StateController():
+    # to control state
+    
 
 class Pet():
     # constructor for pet
@@ -154,7 +159,7 @@ class Pet():
             self.update_animations()
     
     def move_right(self, event):
-        if self.x > self.window.winfo_screenwidth() - PET_SIZE:
+        if self.x < self.window.winfo_screenwidth() - PET_SIZE:
             self.set_state(PetState.WALKING_LEFT)
             self.direction = Direction.LEFT
         else:
