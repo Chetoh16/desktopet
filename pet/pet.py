@@ -154,8 +154,12 @@ class Pet():
             self.update_animations()
     
     def move_right(self, event):
-        self.set_state(PetState.WALKING_RIGHT)
-        self.direction = Direction.RIGHT
+        if self.x > self.window.winfo_screenwidth() - PET_SIZE:
+            self.set_state(PetState.WALKING_LEFT)
+            self.direction = Direction.LEFT
+        else:
+            self.set_state(PetState.WALKING_RIGHT)
+            self.direction = Direction.RIGHT
 
     
     def update_animations(self):
