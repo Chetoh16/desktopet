@@ -29,10 +29,15 @@ class MovementController:
         # therefore do not need to define IDLE speed
         return self.SPEED_MAP.get(state, 0)    
 
+    
+
 class Direction(Enum):
     LEFT = -1
     RIGHT = 1
 
+class StateController():
+    # to control state
+    
 
 class Pet():
     # constructor for pet
@@ -154,8 +159,12 @@ class Pet():
             self.update_animations()
     
     def move_right(self, event):
-        self.set_state(PetState.WALKING_RIGHT)
-        self.direction = Direction.RIGHT
+        if self.x < self.window.winfo_screenwidth() - PET_SIZE:
+            self.set_state(PetState.WALKING_LEFT)
+            self.direction = Direction.LEFT
+        else:
+            self.set_state(PetState.WALKING_RIGHT)
+            self.direction = Direction.RIGHT
 
     
     def update_animations(self):
@@ -192,11 +201,17 @@ class Pet():
         if self.state == PetState.WALKING_RIGHT:
             if self.x < self.window.winfo_screenwidth() - PET_SIZE:
                 self.x += speed * self.direction.value
+            else:
+                # transition back to idle after reaching end of the screen
+                self.window.after(self.frame_delay,lambda: self.transition(PetState.IDLE))
 
         # Walking Left
         elif self.state == PetState.WALKING_LEFT:
             if self.x > 0:
                 self.x += speed * self.direction.value
+            else:
+                # transition back to idle after reaching end of the screen
+                self.window.after(self.frame_delay,lambda: self.transition(PetState.IDLE))
         
         # Cross Arms TO Idle
         elif self.state == PetState.WAITING:
