@@ -1,3 +1,4 @@
+import random
 import tkinter as tk
 import time
 from enum import Enum
@@ -21,9 +22,11 @@ PET_SIZE = BASE_SIZE * SCALE
     
 
 class MovementController:
-    SPEED_MAP = {PetState.WALKING_LEFT: 2, PetState.WALKING_RIGHT: 2, PetState.RUNNING: 6}
+    SPEED_MAP = {PetState.WALKING_LEFT: 10, PetState.WALKING_RIGHT: 10, PetState.RUNNING: 15}
 
     def get_speed(self, state):
+        # 0 is the default speed if the state is not in the SPEED_MAP
+        # therefore do not need to define IDLE speed
         return self.SPEED_MAP.get(state, 0)    
 
 class Direction(Enum):
@@ -47,6 +50,10 @@ class Pet():
         self.walking_left_frames = self.load_frames("assets/walking_left", "walking_left", 7)
         self.walking_right_frames = self.load_frames("assets/walking_right", "walking_right", 7)
 
+        # this is used to lock in a state to prevent states flickering uncontrollably
+        # problem is called Uncached Per-Tick Updates
+        self.timer_scheduled = False
+
         self.state = PetState.IDLE
 
         # current frame of the animation, used to cycle through frames
@@ -54,7 +61,14 @@ class Pet():
 
         self.frame_delay = 40
         self.animation_counter = 0
-        self.animation_speed = 3   # Change frame every 3 updates
+        self.animation_speed = {
+            PetState.IDLE: 12,
+            PetState.WAITING: 12,
+            PetState.WALKING_LEFT: 2,
+            PetState.WALKING_RIGHT: 2,
+            PetState.RUNNING: 2
+        }
+
 
         # dictionary to hold the frames for each state
         self.animations = {
@@ -102,6 +116,7 @@ class Pet():
 
         # run self.update() after the frame delay when mainloop starts
         self.window.after(self.frame_delay, self.update)
+
         self.window.mainloop() 
 
     
@@ -161,20 +176,54 @@ class Pet():
         # tkinter does not keep a reference to the image, so we need to do it ourselves (bad)
         self.label.image = current_frame 
 
+    def transition(self, new_state):
+        self.set_state(new_state)
+
+        # open the gate for the new state
+        self.timer_scheduled = False
 
     def update(self):
 
         speed = self.movement.get_speed(self.state)
 
+        # EVENTS
+
+        # Walking Right
         if self.state == PetState.WALKING_RIGHT:
             if self.x < self.window.winfo_screenwidth() - PET_SIZE:
                 self.x += speed * self.direction.value
+
+        # Walking Left
+        elif self.state == PetState.WALKING_LEFT:
+            if self.x > 0:
+                self.x += speed * self.direction.value
+        
+        # Cross Arms TO Idle
+        elif self.state == PetState.WAITING:
+            if not self.timer_scheduled:
+
+                # lock the gate to prevent constant state changes
+                self.timer_scheduled = True
+                random_time = random.randint(5, 10) * 1000
+                self.window.after(random_time, lambda: self.transition(PetState.IDLE))
+
+        # Idle to Cross Arms
+        elif self.state == PetState.IDLE:
+            if not self.timer_scheduled:
+
+                # lock the gate to prevent constant state changes
+                self.timer_scheduled = True
+                random_time = random.randint(5, 10) * 1000
+                self.window.after(random_time, lambda: self.transition(PetState.WAITING))
+
         
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
                 
         self.animation_counter += 1
 
-        if self.animation_counter >= self.animation_speed:
+        animation_speed = self.animation_speed.get(self.state, 3)
+
+        if self.animation_counter >= animation_speed:
             self.animation_counter = 0
             self.update_animations()
 
