@@ -190,9 +190,11 @@ class Pet():
 
         # Walking Right
         if self.state == PetState.WALKING_RIGHT:
-            pass
             if self.x < self.window.winfo_screenwidth() - PET_SIZE:
                 self.x += speed * self.direction.value
+            else:
+                # transition back to idle after reaching end of the screen
+                self.window.after(self.frame_delay,lambda: self.transition(PetState.IDLE))
 
         # Walking Left
         elif self.state == PetState.WALKING_LEFT:
@@ -200,7 +202,7 @@ class Pet():
                 self.x += speed * self.direction.value
             else:
                 # transition back to idle after reaching end of the screen
-                self.window.after_cancel(self.frame_delay,lambda: self.transition(PetState.IDLE))
+                self.window.after(self.frame_delay,lambda: self.transition(PetState.IDLE))
         
         # Cross Arms TO Idle
         elif self.state == PetState.WAITING:
