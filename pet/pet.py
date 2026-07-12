@@ -35,8 +35,20 @@ class Direction(Enum):
     LEFT = -1
     RIGHT = 1
 
-class StateController():
+class StateController:
     # to control state
+    def __init__(self, window, on_state_change):
+        self.window = window
+        self.state = PetState.IDLE
+        self.direction = Direction.RIGHT
+
+        # This variable will be used for cancelling actions that will otherwise wrongly override other actions
+        self.pending_job = None
+
+        self.on_state_change = on_state_change
+
+    
+        
     
 
 class Pet():
