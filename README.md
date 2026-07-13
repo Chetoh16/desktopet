@@ -6,6 +6,7 @@ little pet for people who feel lonely
 
 ## 13/07/26
 ### Changed
+- Implemented a `StateController` class to control and centralise state changes/transitions.
 - `timer_schedule` gate variable now replaced by a `pending_job` system where the action/event can be cancelled to give way to other events.
 
 ## 11/07/26

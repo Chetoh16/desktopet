@@ -85,8 +85,29 @@ class StateController:
     def start(self):
         # call it once to start the idling loop
         self.schedule_idle_cycle()
-    
+
+    # EXTERNAL EVENTS
+
+    def handle_clicks(self, new_direction):
         
+        if self.state in (PetState.IDLE, PetState.WAITING):
+            new_state = PetState.WALKING_RIGHT if new_direction == Direction.RIGHT else PetState.WALKING_LEFT
+            self.set_state(new_state, direction = new_direction)
+
+        # if pet is clicked during walking, reverse direction
+        elif self.state in (PetState.WALKING_RIGHT, PetState.WALKING_LEFT):
+            reverse_direction = Direction.RIGHT if self.direction == Direction.LEFT else Direction.LEFT
+            new_state = PetState.WALKING_RIGHT if reverse_direction == Direction.RIGHT else PetState.WALKING_LEFT
+            self.set_state(new_state, direction= reverse_direction)
+
+    def halt_when_edge_reached(self):
+        # could be expanded later on to include more than just reaching the edge of the screen
+        
+        if self.state in (PetState.WALKING_RIGHT, PetState.WALKING_LEFT):
+            self.set_state(PetState.IDLE)
+        
+
+
     
 
 
