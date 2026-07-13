@@ -170,7 +170,9 @@ class Pet():
 
         # create a window -> 64x64+{x}+0 = pixel size 64x64 at coordinates 0,0
         self.x = 0
-        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
+        self.y = self.window.winfo_screenheight() - PET_SIZE - 20
+        print(self.y)
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
 
         # give window to geometry manager (so it will appear)
         self.label.pack()
@@ -278,7 +280,7 @@ class Pet():
 
                 self.controller.halt_when_edge_reached()
         
-        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
                 
         self.animation_counter += 1
 
