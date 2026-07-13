@@ -225,7 +225,10 @@ class Pet():
         
     # pet moves right if there's space, left if not
     def move_pet(self, event):
+
+        # might need to do it the other way since handle_click reverses direction
         move_direction = Direction.RIGHT if self.x < self.window.winfo_screenwidth() - PET_SIZE else Direction.LEFT
+
         self.controller.handle_clicks(move_direction)
 
 
@@ -256,44 +259,35 @@ class Pet():
 
     def update(self):
 
+
+        state = self.state
+        direction = self.controller.direction
         speed = self.movement.get_speed(self.state)
 
-        # EVENTS
+        # EVENTS - Physics / Rules
 
         # Walking Right
         if self.state == PetState.WALKING_RIGHT:
-            if self.x < self.window.winfo_screenwidth() - PET_SIZE:
-                self.x += speed * self.direction.value
-            else:
-                # transition back to idle after reaching end of the screen
-                self.window.after(self.frame_delay,lambda: self.transition(PetState.IDLE))
+            self.x += speed * self.direction.value
 
+            if self.x >= self.window.winfo_screenwidth() - PET_SIZE:
+                
+                # set it to the edge just in case
+                self.x = self.window.winfo_screenwidth() - PET_SIZE
+
+                self.controller.halt_when_edge_reached()
+        
         # Walking Left
         elif self.state == PetState.WALKING_LEFT:
-            if self.x > 0:
-                self.x += speed * self.direction.value
-            else:
-                # transition back to idle after reaching end of the screen
-                self.window.after(self.frame_delay,lambda: self.transition(PetState.IDLE))
+            self.x += speed * self.direction.value
+
+            if self.x <= 0:
+                
+                # set it to the edge just in case
+                self.x = 0
+
+                self.controller.halt_when_edge_reached()
         
-        # Cross Arms TO Idle
-        elif self.state == PetState.WAITING:
-            if not self.timer_scheduled:
-
-                # lock the gate to prevent constant state changes
-                self.timer_scheduled = True
-                random_time = random.randint(5, 10) * 1000
-                self.window.after(random_time, lambda: self.transition(PetState.IDLE))
-
-        # Idle to Cross Arms
-        elif self.state == PetState.IDLE:
-            if not self.timer_scheduled:
-
-                # lock the gate to prevent constant state changes
-                self.timer_scheduled = True
-                random_time = random.randint(5, 10) * 1000
-                self.window.after(random_time, lambda: self.transition(PetState.WAITING))
-
         
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
                 
