@@ -182,6 +182,9 @@ class Pet():
         #self.label.bind("<B1-Motion>", self.do_drag)
         #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
 
+        # start the IDLE loop
+        self.controller.start()
+
         # run self.update() after the frame delay when mainloop starts
         self.window.after(self.frame_delay, self.update)
 
@@ -247,15 +250,15 @@ class Pet():
     def update(self):
 
 
-        state = self.state
+        state = self.controller.state
         direction = self.controller.direction
-        speed = self.movement.get_speed(self.state)
+        speed = self.movement.get_speed(self.controller.state)
 
         # EVENTS - Physics / Rules
 
         # Walking Right
-        if self.state == PetState.WALKING_RIGHT:
-            self.x += speed * self.direction.value
+        if state == PetState.WALKING_RIGHT:
+            self.x += speed * direction.value
 
             if self.x >= self.window.winfo_screenwidth() - PET_SIZE:
                 
@@ -265,8 +268,8 @@ class Pet():
                 self.controller.halt_when_edge_reached()
         
         # Walking Left
-        elif self.state == PetState.WALKING_LEFT:
-            self.x += speed * self.direction.value
+        elif state == PetState.WALKING_LEFT:
+            self.x += speed * direction.value
 
             if self.x <= 0:
                 
@@ -279,7 +282,7 @@ class Pet():
                 
         self.animation_counter += 1
 
-        animation_speed = self.animation_speed.get(self.state, 3)
+        animation_speed = self.animation_speed.get(state, 3)
 
         if self.animation_counter >= animation_speed:
             self.animation_counter = 0
