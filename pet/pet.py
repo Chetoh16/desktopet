@@ -184,7 +184,7 @@ class Pet():
         # INTERACTIONS
 
         # Bind left button events for drag and click distinction
-        self.label.bind("<ButtonPress-1>", self.move_right)
+        self.label.bind("<ButtonPress-1>", self.move_pet)
         #self.label.bind("<B1-Motion>", self.do_drag)
         #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
 
@@ -223,14 +223,11 @@ class Pet():
         self.animation_counter = 0
         self.update_animations()
         
-    
-    def move_right(self, event):
-        if self.x < self.window.winfo_screenwidth() - PET_SIZE:
-            self.set_state(PetState.WALKING_LEFT)
-            self.direction = Direction.LEFT
-        else:
-            self.set_state(PetState.WALKING_RIGHT)
-            self.direction = Direction.RIGHT
+    # pet moves right if there's space, left if not
+    def move_pet(self, event):
+        move_direction = Direction.RIGHT if self.x < self.window.winfo_screenwidth() - PET_SIZE else Direction.LEFT
+        self.controller.handle_clicks(move_direction)
+
 
     
     def update_animations(self):
