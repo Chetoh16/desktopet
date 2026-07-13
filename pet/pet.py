@@ -236,7 +236,7 @@ class Pet():
     def update_animations(self):
 
         # array of frames for the current state
-        frames = self.animations[self.state]
+        frames = self.animations[self.controller.state]
         
         # get the current frame to display
         current_frame = frames[self.frame_index]
@@ -287,7 +287,6 @@ class Pet():
                 self.x = 0
 
                 self.controller.halt_when_edge_reached()
-        
         
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
                 
