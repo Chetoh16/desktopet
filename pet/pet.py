@@ -54,6 +54,7 @@ class StateController:
             self.pending_job = None
 
     # direction is an optional parameter, if it's not passed, the current direction is maintained
+    # only place where st
     def set_state(self,new_state, direction = None):
 
         self.cancel_pending_job()
@@ -64,17 +65,30 @@ class StateController:
             self.direction = direction
         
         self.on_state_change(new_state)
+        self.enter_loop_state(new_state)
 
+    def enter_loop_state(self, state):
+        if self.state in (PetState.IDLE, PetState.WAITING):
+            self.schedule_idle_cycle()
 
+    def schedule_idle_cycle(self):
+        
+        # 5-10 seconds of idling between changing states of idling
+        random_time = random.randint(5,10) * 1000
 
+        # switch to the opposite idling pose
+        target = PetState.IDLE if self.state == PetState.WAITING else PetState.WAITING
+        
+        # save it in pending_job so that when user clicks, it can be cancelled to override
+        self.pending_job = self.window.after(random_time, lambda: self.set_state(target))
+
+    def start(self):
+        # call it once to start the idling loop
+        self.schedule_idle_cycle()
 
         
     
 
-
-    
-        
-    
 
 class Pet():
     # constructor for pet
