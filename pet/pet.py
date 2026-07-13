@@ -108,9 +108,6 @@ class StateController:
         
 
 
-    
-
-
 class Pet():
     # constructor for pet
     def __init__(self):
@@ -152,13 +149,13 @@ class Pet():
             PetState.IDLE: self.default_idle_frames,
             PetState.WAITING: self.crossed_arms_idle_frames,
             PetState.WALKING_LEFT: self.walking_left_frames,
-            PetState.WALKING_RIGHT: self.walking_right_frames
+            PetState.WALKING_RIGHT: self.walking_right_frames   
         }
         
         self.movement = MovementController()
 
-         # 1:right, -1:left
-        self.direction = Direction.RIGHT 
+        # controller own state + direction + transition rules + timers
+        self.controller = StateController(self.window, on_state_change=self.on_state_change)
 
         # use a colour that's not in the sprite in order to make the background transparent
         TRANSPARENT_COLOUR = "#ff00ff"
