@@ -124,12 +124,6 @@ class Pet():
         self.walking_left_frames = self.load_frames("assets/walking_left", "walking_left", 7)
         self.walking_right_frames = self.load_frames("assets/walking_right", "walking_right", 7)
 
-        # this is used to lock in a state to prevent states flickering uncontrollably
-        # problem is called Uncached Per-Tick Updates
-        self.timer_scheduled = False
-
-        self.state = PetState.IDLE
-
         # current frame of the animation, used to cycle through frames
         self.frame_index = 0
 
@@ -231,7 +225,6 @@ class Pet():
 
         self.controller.handle_clicks(move_direction)
 
-
     
     def update_animations(self):
 
@@ -250,12 +243,6 @@ class Pet():
         # update the label's image attribute to the current frame to prevent it from being garbage collected
         # tkinter does not keep a reference to the image, so we need to do it ourselves (bad)
         self.label.image = current_frame 
-
-    def transition(self, new_state):
-        self.set_state(new_state)
-
-        # open the gate for the new state
-        self.timer_scheduled = False
 
     def update(self):
 
