@@ -35,9 +35,60 @@ class Direction(Enum):
     LEFT = -1
     RIGHT = 1
 
-class StateController():
+class StateController:
     # to control state
+    def __init__(self, window, on_state_change):
+        self.window = window
+        self.state = PetState.IDLE
+        self.direction = Direction.RIGHT
+
+        # This variable will be used for cancelling actions that will otherwise wrongly override other actions
+        self.pending_job = None
+
+        self.on_state_change = on_state_change
     
+    # function that cancels pending jobs/actions so that the current one can take place safely without interruptions
+    def cancel_pending_job(self):
+        if self.pending_job is not None:
+            self.window.after_cancel(self.pending_job)
+            self.pending_job = None
+
+    # direction is an optional parameter, if it's not passed, the current direction is maintained
+    # only place where st
+    def set_state(self,new_state, direction = None):
+
+        self.cancel_pending_job()
+
+        self.state = new_state
+
+        if direction is not None:
+            self.direction = direction
+        
+        self.on_state_change(new_state)
+        self.enter_loop_state(new_state)
+
+    def enter_loop_state(self, state):
+        if self.state in (PetState.IDLE, PetState.WAITING):
+            self.schedule_idle_cycle()
+
+    def schedule_idle_cycle(self):
+        
+        # 5-10 seconds of idling between changing states of idling
+        random_time = random.randint(5,10) * 1000
+
+        # switch to the opposite idling pose
+        target = PetState.IDLE if self.state == PetState.WAITING else PetState.WAITING
+        
+        # save it in pending_job so that when user clicks, it can be cancelled to override
+        self.pending_job = self.window.after(random_time, lambda: self.set_state(target))
+
+    def start(self):
+        # call it once to start the idling loop
+        self.schedule_idle_cycle()
+
+        
+    
+
 
 class Pet():
     # constructor for pet
