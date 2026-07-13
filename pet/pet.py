@@ -46,6 +46,31 @@ class StateController:
         self.pending_job = None
 
         self.on_state_change = on_state_change
+    
+    # function that cancels pending jobs/actions so that the current one can take place safely without interruptions
+    def cancel_pending_job(self):
+        if self.pending_job is not None:
+            self.window.after_cancel(self.pending_job)
+            self.pending_job = None
+
+    # direction is an optional parameter, if it's not passed, the current direction is maintained
+    def set_state(self,new_state, direction = None):
+
+        self.cancel_pending_job()
+
+        self.state = new_state
+
+        if direction is not None:
+            self.direction = direction
+        
+        self.on_state_change(new_state)
+
+
+
+
+        
+    
+
 
     
         
