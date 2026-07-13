@@ -4,6 +4,11 @@ little pet for people who feel lonely
 
 # Changelog
 
+## 13/07/26
+### Changed
+- Implemented a `StateController` class to control and centralise state changes/transitions.
+- `timer_schedule` gate variable now replaced by a `pending_job` system where the action/event can be cancelled to give way to other events.
+
 ## 11/07/26
 ### Added
 - A random state change. Every 5-10 seconds (randomised), the `update` function changes the pet's state from IDLE to WAITING and vice versa. 
