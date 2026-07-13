@@ -216,16 +216,13 @@ class Pet():
             frames.append(ImageTk.PhotoImage(image))
         return frames
     
-    def set_state(self, new_state):
-        if (new_state != self.state):
 
-            self.state = new_state
-
-             # reset frame index when state changes so that the animation starts from the beginning
-            self.frame_index = 0 
-            self.animation_counter = 0
-
-            self.update_animations()
+    # called by StateController whenever a state changes
+    def on_state_change(self, new_state):
+        self.frame_index = 0
+        self.animation_counter = 0
+        self.update_animations()
+        
     
     def move_right(self, event):
         if self.x < self.window.winfo_screenwidth() - PET_SIZE:
