@@ -100,11 +100,18 @@ class StateController:
             new_state = PetState.WALKING_RIGHT if reverse_direction == Direction.RIGHT else PetState.WALKING_LEFT
             self.set_state(new_state, direction= reverse_direction)
 
-    def halt_when_edge_reached(self):
+    def notify_edge_reached(self):
         # could be expanded later on to include more than just reaching the edge of the screen
         
         if self.state in (PetState.WALKING_RIGHT, PetState.WALKING_LEFT):
-            self.set_state(PetState.IDLE)
+            self.go_idle()
+    
+    def request_halt(self):
+        if self.state is not PetState.IDLE:
+            self.go_idle()
+
+    def go_idle(self):
+        self.set_state(PetState.IDLE)
         
 
 
@@ -171,7 +178,6 @@ class Pet():
         # create a window -> 64x64+{x}+0 = pixel size 64x64 at coordinates 0,0
         self.x = 0
         self.y = self.window.winfo_screenheight() - PET_SIZE - 20
-        print(self.y)
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
 
         # give window to geometry manager (so it will appear)
@@ -181,6 +187,7 @@ class Pet():
 
         # Bind left button events for drag and click distinction
         self.label.bind("<ButtonPress-1>", self.move_pet)
+        self.label.bind("<ButtonPress-3>", self.on_right_click)
         #self.label.bind("<B1-Motion>", self.do_drag)
         #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
 
@@ -230,6 +237,9 @@ class Pet():
 
         self.controller.handle_clicks(move_direction)
 
+    def on_right_click(self, event):
+        self.controller.request_halt()
+
     
     def update_animations(self):
 
@@ -267,7 +277,7 @@ class Pet():
                 # set it to the edge just in case
                 self.x = self.window.winfo_screenwidth() - PET_SIZE
 
-                self.controller.halt_when_edge_reached()
+                self.controller.notify_edge_reached()
         
         # Walking Left
         elif state == PetState.WALKING_LEFT:
@@ -278,7 +288,7 @@ class Pet():
                 # set it to the edge just in case
                 self.x = 0
 
-                self.controller.halt_when_edge_reached()
+                self.controller.notify_edge_reached()
         
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
                 
