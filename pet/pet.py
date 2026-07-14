@@ -140,6 +140,27 @@ class Pet():
         # by putting self before the variables, we can access them in other functions
         # if not, they only exist in this function
         
+        # load skins
+        self.skins = [
+            PetSkin(
+                name = "human-detective",
+                idle_path = "assets/default_idle", idle_prefix="idle_default_det", idle_count=2,
+                waiting_path = "assets/crossed_arms_idle", waiting_prefix="idle_detective", waiting_count=2,
+                walking_left_path = "assets/walking_left", walking_left_prefix = "walking_left", walking_left_count=7,
+                walking_right_path = "assets/walking_right", walking_right_prefix = "walking_right", walking_right_count=7
+            )
+            # PetSkin(
+            #     name = "bird-detective",
+            #     idle_path = "assets/", idle_prefix="", idle_count=2,
+            #     waiting_path = "assets/", waiting_prefix="", waiting_count=2,
+            #     walking_left_path = "assets/", walking_left_prefix = "", walking_left_count=7,
+            #     walking_right_path = "assets/", walking_right_prefix = "", walking_right_count=7
+            # )
+        ]
+
+        self.current_skin_index = 0
+        self.load_skin(self.skins[self.current_skin_index])
+
         # load all animation frames for each state
         self.default_idle_frames = self.load_frames("assets/default_idle", "idle_default_det", 2)
         self.crossed_arms_idle_frames = self.load_frames("assets/crossed_arms_idle", "idle_detective", 2)
@@ -239,6 +260,8 @@ class Pet():
             frames.append(ImageTk.PhotoImage(image))
         return frames
     
+    def load_skin(self):
+        pass
 
     # called by StateController whenever a state changes
     def on_state_change(self, new_state):
