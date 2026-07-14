@@ -125,11 +125,10 @@ class PetSkin:
         self.walking_left_set = (walking_left_path, walking_left_prefix, walking_left_count)
         self.walking_right_set = (walking_right_path, walking_right_prefix, walking_right_count)     
 
-        # if waiting sprites do not exist, use default idle sprites
         if waiting_path and waiting_prefix and waiting_count > 0:
             self.waiting_set = (waiting_path, waiting_prefix, waiting_count)
         else:
-            self.waiting_set = self.idle_set
+            self.waiting_set = None
 
 class Pet():
     def __init__(self):
@@ -243,8 +242,20 @@ class Pet():
             frames.append(ImageTk.PhotoImage(image))
         return frames
     
-    def load_skin(self):
-        pass
+    def load_skin(self, skin):
+        animations = {
+            PetState.IDLE: self.load_frames(*skin.idle_set),
+            PetState.WALKING_RIGHT: self.load_frames(*skin.walking_right_set),
+            PetState.WALKING_LEFT: self.load_frames(*skin.walking_left_set)
+        }
+
+        # if there's no waiting sprites, use default idle sprites
+        animations[PetState.WAITING] = (
+            self.load_frames(*skin.waiting_config) if skin.waiting_config
+            else animations[PetState.IDLE] 
+        )
+        
+        self.animations = animations
 
     # called by StateController whenever a state changes
     def on_state_change(self, new_state):
