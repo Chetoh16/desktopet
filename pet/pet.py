@@ -147,14 +147,14 @@ class Pet():
                 waiting_path = "assets/crossed_arms_idle", waiting_prefix="idle_detective", waiting_count=2,
                 walking_left_path = "assets/walking_left", walking_left_prefix = "walking_left", walking_left_count=7,
                 walking_right_path = "assets/walking_right", walking_right_prefix = "walking_right", walking_right_count=7
+            ),
+            PetSkin(
+                name = "bird-detective",
+                idle_path = "assets/birdguy/idle", idle_prefix="birdguy_idle", idle_count=2,
+                waiting_path = "", waiting_prefix="", waiting_count=0,
+                walking_left_path = "assets/birdguy/walking_left", walking_left_prefix = "birdguy_walking_left", walking_left_count=9,
+                walking_right_path = "assets/birdguy/walking_right", walking_right_prefix = "birdguy_walking_right", walking_right_count=9
             )
-            # PetSkin(
-            #     name = "bird-detective",
-            #     idle_path = "assets/", idle_prefix="", idle_count=2,
-            #     waiting_path = "assets/", waiting_prefix="", waiting_count=2,
-            #     walking_left_path = "assets/", walking_left_prefix = "", walking_left_count=7,
-            #     walking_right_path = "assets/", walking_right_prefix = "", walking_right_count=7
-            # )
         ]
 
         self.current_skin_index = 0
@@ -202,7 +202,11 @@ class Pet():
 
         # give window to geometry manager (so it will appear)
         self.label.pack()
-        
+
+        # force it so the 'c' binding actually fires
+        self.window.focus_force()
+
+
         # INTERACTIONS
 
         # Right Click = Halt
@@ -212,8 +216,10 @@ class Pet():
 
         self.label.bind("<ButtonPress-1>", self.move_pet)
         self.label.bind("<ButtonPress-3>", self.on_right_click)
-        self.label.bind("<Key-c>", self.change_skin)
-        self.label.bind("<Key-C>", self.change_skin)
+
+        # bind it to the window instead of the label
+        self.window.bind("<Key-c>", self.change_skin)
+        self.window.bind("<Key-C>", self.change_skin)
         #self.label.bind("<B1-Motion>", self.do_drag)
         #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
 
