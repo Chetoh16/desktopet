@@ -257,7 +257,7 @@ class Pet():
 
         # if there's no waiting sprites, use default idle sprites
         animations[PetState.WAITING] = (
-            self.load_frames(*skin.waiting_config) if skin.waiting_config
+            self.load_frames(*skin.waiting_set) if skin.waiting_set
             else animations[PetState.IDLE] 
         )
         
