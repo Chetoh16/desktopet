@@ -4,6 +4,13 @@ little pet for people who feel lonely
 
 # Changelog
 
+## 14/07/26
+## Added
+- A skin class to handle different skins for (different) pets.
+
+### Changed
+- Save skins on an array and add a skin index.
+
 ## 13/07/26
 
 ### Added
