@@ -115,8 +115,23 @@ class StateController:
         
 
 
+class PetSkin:
+    def __init__(self, name, idle_path, idle_prefix, idle_count,
+                 walking_left_path, walking_left_prefix, walking_left_count,
+                 walking_right_path, walking_right_prefix, walking_right_count,
+                 waiting_path = None, waiting_prefix = None, waiting_count = 0, y_offset = 20):
+        self.name = name
+        self.idle_set = (idle_path, idle_prefix, idle_count)
+        self.walking_left_set = (walking_left_path, walking_left_prefix, walking_left_count)
+        self.walking_right_set = (walking_right_path, walking_right_prefix, walking_right_count)    
+        self.y_offset =  y_offset
+
+        if waiting_path and waiting_prefix and waiting_count > 0:
+            self.waiting_set = (waiting_path, waiting_prefix, waiting_count)
+        else:
+            self.waiting_set = None
+
 class Pet():
-    # constructor for pet
     def __init__(self):
 
         # create a window
@@ -125,12 +140,29 @@ class Pet():
         # by putting self before the variables, we can access them in other functions
         # if not, they only exist in this function
         
-        # load all animation frames for each state
-        self.default_idle_frames = self.load_frames("assets/default_idle", "idle_default_det", 2)
-        self.crossed_arms_idle_frames = self.load_frames("assets/crossed_arms_idle", "idle_detective", 2)
-        self.walking_left_frames = self.load_frames("assets/walking_left", "walking_left", 7)
-        self.walking_right_frames = self.load_frames("assets/walking_right", "walking_right", 7)
+        # load skins
+        self.skins = [
+            PetSkin(
+                name = "human-detective",
+                idle_path = "assets/default_idle", idle_prefix="idle_default_det", idle_count=2,
+                waiting_path = "assets/crossed_arms_idle", waiting_prefix="idle_detective", waiting_count=2,
+                walking_left_path = "assets/walking_left", walking_left_prefix = "walking_left", walking_left_count=7,
+                walking_right_path = "assets/walking_right", walking_right_prefix = "walking_right", walking_right_count=7,
+                y_offset = 20
+            ),
+            PetSkin(
+                name = "bird-detective",
+                idle_path = "assets/birdguy/idle", idle_prefix="birdguy_idle", idle_count=2,
+                waiting_path = "", waiting_prefix="", waiting_count=0,
+                walking_left_path = "assets/birdguy/walking_left", walking_left_prefix = "birdguy_walking_left", walking_left_count=9,
+                walking_right_path = "assets/birdguy/walking_right", walking_right_prefix = "birdguy_walking_right", walking_right_count=9,
+                y_offset = -40
+            )
+        ]
 
+        self.current_skin_index = 0
+        self.load_skin(self.skins[self.current_skin_index])
+        
         # current frame of the animation, used to cycle through frames
         self.frame_index = 0
 
@@ -142,15 +174,6 @@ class Pet():
             PetState.WALKING_LEFT: 2,
             PetState.WALKING_RIGHT: 2,
             PetState.RUNNING: 2
-        }
-
-
-        # dictionary to hold the frames for each state
-        self.animations = {
-            PetState.IDLE: self.default_idle_frames,
-            PetState.WAITING: self.crossed_arms_idle_frames,
-            PetState.WALKING_LEFT: self.walking_left_frames,
-            PetState.WALKING_RIGHT: self.walking_right_frames   
         }
         
         self.movement = MovementController()
@@ -175,19 +198,34 @@ class Pet():
         # create a label as a container for our image
         self.label = tk.Label(self.window, bd=0, bg=TRANSPARENT_COLOUR)
 
+        
+        self.y_offset = self.skins[self.current_skin_index].y_offset
+
         # create a window -> 64x64+{x}+0 = pixel size 64x64 at coordinates 0,0
         self.x = 0
-        self.y = self.window.winfo_screenheight() - PET_SIZE - 20
+        self.y = self.window.winfo_screenheight() - PET_SIZE - self.y_offset
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
 
         # give window to geometry manager (so it will appear)
         self.label.pack()
-        
+
+        # force it so the 'c' binding actually fires
+        self.window.focus_force()
+
+
         # INTERACTIONS
 
-        # Bind left button events for drag and click distinction
+        # Right Click = Halt
+        # Left Click = Walk / Reverse Walking direction
+        # C = Change skin
+
+
         self.label.bind("<ButtonPress-1>", self.move_pet)
         self.label.bind("<ButtonPress-3>", self.on_right_click)
+
+        # bind it to the window instead of the label
+        self.window.bind("<Key-c>", self.change_skin)
+        self.window.bind("<Key-C>", self.change_skin)
         #self.label.bind("<B1-Motion>", self.do_drag)
         #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
 
@@ -222,6 +260,20 @@ class Pet():
             frames.append(ImageTk.PhotoImage(image))
         return frames
     
+    def load_skin(self, skin):
+        animations = {
+            PetState.IDLE: self.load_frames(*skin.idle_set),
+            PetState.WALKING_RIGHT: self.load_frames(*skin.walking_right_set),
+            PetState.WALKING_LEFT: self.load_frames(*skin.walking_left_set)
+        }
+
+        # if there's no waiting sprites, use default idle sprites
+        animations[PetState.WAITING] = (
+            self.load_frames(*skin.waiting_set) if skin.waiting_set
+            else animations[PetState.IDLE] 
+        )
+        
+        self.animations = animations
 
     # called by StateController whenever a state changes
     def on_state_change(self, new_state):
@@ -239,6 +291,24 @@ class Pet():
 
     def on_right_click(self, event):
         self.controller.request_halt()
+
+    def change_skin(self, event):
+        # Switch to next skin (with wraparound) and reset animation 
+        self.current_skin_index = (self.current_skin_index + 1) % len(self.skins)
+        active_skin = self.skins[self.current_skin_index]
+    
+        self.load_skin(active_skin)
+
+        # update y-offset immediately on keypress
+        self.y_offset = active_skin.y_offset
+        self.y = self.window.winfo_screenheight() - PET_SIZE - self.y_offset
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
+
+        self.frame_index = 0
+        self.animation_counter = 0
+        self.update_animations()
+
+        self.window.update_idletasks()
 
     
     def update_animations(self):
