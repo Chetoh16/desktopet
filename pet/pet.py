@@ -119,11 +119,12 @@ class PetSkin:
     def __init__(self, name, idle_path, idle_prefix, idle_count,
                  walking_left_path, walking_left_prefix, walking_left_count,
                  walking_right_path, walking_right_prefix, walking_right_count,
-                 waiting_path = None, waiting_prefix = None, waiting_count = 0):
+                 waiting_path = None, waiting_prefix = None, waiting_count = 0, y_offset = 20):
         self.name = name
         self.idle_set = (idle_path, idle_prefix, idle_count)
         self.walking_left_set = (walking_left_path, walking_left_prefix, walking_left_count)
-        self.walking_right_set = (walking_right_path, walking_right_prefix, walking_right_count)     
+        self.walking_right_set = (walking_right_path, walking_right_prefix, walking_right_count)    
+        self.y_offset =  y_offset
 
         if waiting_path and waiting_prefix and waiting_count > 0:
             self.waiting_set = (waiting_path, waiting_prefix, waiting_count)
@@ -146,14 +147,16 @@ class Pet():
                 idle_path = "assets/default_idle", idle_prefix="idle_default_det", idle_count=2,
                 waiting_path = "assets/crossed_arms_idle", waiting_prefix="idle_detective", waiting_count=2,
                 walking_left_path = "assets/walking_left", walking_left_prefix = "walking_left", walking_left_count=7,
-                walking_right_path = "assets/walking_right", walking_right_prefix = "walking_right", walking_right_count=7
+                walking_right_path = "assets/walking_right", walking_right_prefix = "walking_right", walking_right_count=7,
+                y_offset = 20
             ),
             PetSkin(
                 name = "bird-detective",
                 idle_path = "assets/birdguy/idle", idle_prefix="birdguy_idle", idle_count=2,
                 waiting_path = "", waiting_prefix="", waiting_count=0,
                 walking_left_path = "assets/birdguy/walking_left", walking_left_prefix = "birdguy_walking_left", walking_left_count=9,
-                walking_right_path = "assets/birdguy/walking_right", walking_right_prefix = "birdguy_walking_right", walking_right_count=9
+                walking_right_path = "assets/birdguy/walking_right", walking_right_prefix = "birdguy_walking_right", walking_right_count=9,
+                y_offset = -40
             )
         ]
 
@@ -195,9 +198,12 @@ class Pet():
         # create a label as a container for our image
         self.label = tk.Label(self.window, bd=0, bg=TRANSPARENT_COLOUR)
 
+        
+        self.y_offset = self.skins[self.current_skin_index].y_offset
+
         # create a window -> 64x64+{x}+0 = pixel size 64x64 at coordinates 0,0
         self.x = 0
-        self.y = self.window.winfo_screenheight() - PET_SIZE - 20
+        self.y = self.window.winfo_screenheight() - PET_SIZE - self.y_offset
         self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
 
         # give window to geometry manager (so it will appear)
@@ -293,9 +299,16 @@ class Pet():
     
         self.load_skin(active_skin)
 
+        # update y-offset immediately on keypress
+        self.y_offset = active_skin.y_offset
+        self.y = self.window.winfo_screenheight() - PET_SIZE - self.y_offset
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
+
         self.frame_index = 0
         self.animation_counter = 0
         self.update_animations()
+
+        self.window.update_idletasks()
 
     
     def update_animations(self):
