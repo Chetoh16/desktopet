@@ -100,15 +100,19 @@ class StateController:
             new_state = PetState.WALKING_RIGHT if reverse_direction == Direction.RIGHT else PetState.WALKING_LEFT
             self.set_state(new_state, direction= reverse_direction)
 
-    def halt_when_edge_reached(self):
+    def notify_edge_reached(self):
         # could be expanded later on to include more than just reaching the edge of the screen
         
         if self.state in (PetState.WALKING_RIGHT, PetState.WALKING_LEFT):
-            self.set_state(PetState.IDLE)
-        
-
-
+            self.go_idle()
     
+    def request_halt(self):
+        if self.state is not PetState.IDLE:
+            self.go_idle()
+
+    def go_idle(self):
+        self.set_state(PetState.IDLE)
+        
 
 
 class Pet():
@@ -126,12 +130,6 @@ class Pet():
         self.crossed_arms_idle_frames = self.load_frames("assets/crossed_arms_idle", "idle_detective", 2)
         self.walking_left_frames = self.load_frames("assets/walking_left", "walking_left", 7)
         self.walking_right_frames = self.load_frames("assets/walking_right", "walking_right", 7)
-
-        # this is used to lock in a state to prevent states flickering uncontrollably
-        # problem is called Uncached Per-Tick Updates
-        self.timer_scheduled = False
-
-        self.state = PetState.IDLE
 
         # current frame of the animation, used to cycle through frames
         self.frame_index = 0
@@ -152,13 +150,13 @@ class Pet():
             PetState.IDLE: self.default_idle_frames,
             PetState.WAITING: self.crossed_arms_idle_frames,
             PetState.WALKING_LEFT: self.walking_left_frames,
-            PetState.WALKING_RIGHT: self.walking_right_frames
+            PetState.WALKING_RIGHT: self.walking_right_frames   
         }
         
         self.movement = MovementController()
 
-         # 1:right, -1:left
-        self.direction = Direction.RIGHT 
+        # controller own state + direction + transition rules + timers
+        self.controller = StateController(self.window, on_state_change=self.on_state_change)
 
         # use a colour that's not in the sprite in order to make the background transparent
         TRANSPARENT_COLOUR = "#ff00ff"
@@ -179,7 +177,8 @@ class Pet():
 
         # create a window -> 64x64+{x}+0 = pixel size 64x64 at coordinates 0,0
         self.x = 0
-        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
+        self.y = self.window.winfo_screenheight() - PET_SIZE - 20
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
 
         # give window to geometry manager (so it will appear)
         self.label.pack()
@@ -187,9 +186,13 @@ class Pet():
         # INTERACTIONS
 
         # Bind left button events for drag and click distinction
-        self.label.bind("<ButtonPress-1>", self.move_right)
+        self.label.bind("<ButtonPress-1>", self.move_pet)
+        self.label.bind("<ButtonPress-3>", self.on_right_click)
         #self.label.bind("<B1-Motion>", self.do_drag)
         #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
+
+        # start the IDLE loop
+        self.controller.start()
 
         # run self.update() after the frame delay when mainloop starts
         self.window.after(self.frame_delay, self.update)
@@ -219,30 +222,29 @@ class Pet():
             frames.append(ImageTk.PhotoImage(image))
         return frames
     
-    def set_state(self, new_state):
-        if (new_state != self.state):
 
-            self.state = new_state
+    # called by StateController whenever a state changes
+    def on_state_change(self, new_state):
+        self.frame_index = 0
+        self.animation_counter = 0
+        self.update_animations()
+        
+    # pet moves right if there's space, left if not
+    def move_pet(self, event):
 
-             # reset frame index when state changes so that the animation starts from the beginning
-            self.frame_index = 0 
-            self.animation_counter = 0
+        # might need to do it the other way since handle_click reverses direction
+        move_direction = Direction.RIGHT if self.x < self.window.winfo_screenwidth() - PET_SIZE else Direction.LEFT
 
-            self.update_animations()
-    
-    def move_right(self, event):
-        if self.x < self.window.winfo_screenwidth() - PET_SIZE:
-            self.set_state(PetState.WALKING_LEFT)
-            self.direction = Direction.LEFT
-        else:
-            self.set_state(PetState.WALKING_RIGHT)
-            self.direction = Direction.RIGHT
+        self.controller.handle_clicks(move_direction)
+
+    def on_right_click(self, event):
+        self.controller.request_halt()
 
     
     def update_animations(self):
 
         # array of frames for the current state
-        frames = self.animations[self.state]
+        frames = self.animations[self.controller.state]
         
         # get the current frame to display
         current_frame = frames[self.frame_index]
@@ -257,58 +259,42 @@ class Pet():
         # tkinter does not keep a reference to the image, so we need to do it ourselves (bad)
         self.label.image = current_frame 
 
-    def transition(self, new_state):
-        self.set_state(new_state)
-
-        # open the gate for the new state
-        self.timer_scheduled = False
-
     def update(self):
 
-        speed = self.movement.get_speed(self.state)
 
-        # EVENTS
+        state = self.controller.state
+        direction = self.controller.direction
+        speed = self.movement.get_speed(self.controller.state)
+
+        # EVENTS - Physics / Rules
 
         # Walking Right
-        if self.state == PetState.WALKING_RIGHT:
-            if self.x < self.window.winfo_screenwidth() - PET_SIZE:
-                self.x += speed * self.direction.value
-            else:
-                # transition back to idle after reaching end of the screen
-                self.window.after(self.frame_delay,lambda: self.transition(PetState.IDLE))
+        if state == PetState.WALKING_RIGHT:
+            self.x += speed * direction.value
 
+            if self.x >= self.window.winfo_screenwidth() - PET_SIZE:
+                
+                # set it to the edge just in case
+                self.x = self.window.winfo_screenwidth() - PET_SIZE
+
+                self.controller.notify_edge_reached()
+        
         # Walking Left
-        elif self.state == PetState.WALKING_LEFT:
-            if self.x > 0:
-                self.x += speed * self.direction.value
-            else:
-                # transition back to idle after reaching end of the screen
-                self.window.after(self.frame_delay,lambda: self.transition(PetState.IDLE))
+        elif state == PetState.WALKING_LEFT:
+            self.x += speed * direction.value
+
+            if self.x <= 0:
+                
+                # set it to the edge just in case
+                self.x = 0
+
+                self.controller.notify_edge_reached()
         
-        # Cross Arms TO Idle
-        elif self.state == PetState.WAITING:
-            if not self.timer_scheduled:
-
-                # lock the gate to prevent constant state changes
-                self.timer_scheduled = True
-                random_time = random.randint(5, 10) * 1000
-                self.window.after(random_time, lambda: self.transition(PetState.IDLE))
-
-        # Idle to Cross Arms
-        elif self.state == PetState.IDLE:
-            if not self.timer_scheduled:
-
-                # lock the gate to prevent constant state changes
-                self.timer_scheduled = True
-                random_time = random.randint(5, 10) * 1000
-                self.window.after(random_time, lambda: self.transition(PetState.WAITING))
-
-        
-        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+0')
+        self.window.geometry(f'{PET_SIZE}x{PET_SIZE}+{self.x}+{self.y}')
                 
         self.animation_counter += 1
 
-        animation_speed = self.animation_speed.get(self.state, 3)
+        animation_speed = self.animation_speed.get(state, 3)
 
         if self.animation_counter >= animation_speed:
             self.animation_counter = 0
