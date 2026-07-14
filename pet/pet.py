@@ -160,15 +160,7 @@ class Pet():
 
         self.current_skin_index = 0
         self.load_skin(self.skins[self.current_skin_index])
-
-        # load all animation frames for each state
-        self.default_idle_frames = self.load_frames("assets/default_idle", "idle_default_det", 2)
-        self.crossed_arms_idle_frames = self.load_frames("assets/crossed_arms_idle", "idle_detective", 2)
-        self.walking_left_frames = self.load_frames("assets/walking_left", "walking_left", 7)
-        self.walking_right_frames = self.load_frames("assets/walking_right", "walking_right", 7)
         
-        self.bird_walking_right_frames = self.load_frames("assets/birdguy/walking_right", "birdguy_walking_right", 10)
-
         # current frame of the animation, used to cycle through frames
         self.frame_index = 0
 
@@ -180,15 +172,6 @@ class Pet():
             PetState.WALKING_LEFT: 2,
             PetState.WALKING_RIGHT: 2,
             PetState.RUNNING: 2
-        }
-
-
-        # dictionary to hold the frames for each state
-        self.animations = {
-            PetState.IDLE: self.default_idle_frames,
-            PetState.WAITING: self.crossed_arms_idle_frames,
-            PetState.WALKING_LEFT: self.walking_left_frames,
-            PetState.WALKING_RIGHT: self.walking_right_frames   
         }
         
         self.movement = MovementController()
