@@ -115,8 +115,23 @@ class StateController:
         
 
 
+class PetSkin:
+    def __init__(self, name, idle_path, idle_prefix, idle_count,
+                 walking_left_path, walking_left_prefix, walking_left_count,
+                 walking_right_path, walking_right_prefix, walking_right_count,
+                 waiting_path = None, waiting_prefix = None, waiting_count = 0):
+        self.name = name
+        self.idle_set = (idle_path, idle_prefix, idle_count)
+        self.walking_left_set = (walking_left_path, walking_left_prefix, walking_left_count)
+        self.walking_right_set = (walking_right_path, walking_right_prefix, walking_right_count)     
+
+        # if waiting sprites do not exist, use default idle sprites
+        if waiting_path and waiting_prefix and waiting_count > 0:
+            self.waiting_set = (waiting_path, waiting_prefix, waiting_count)
+        else:
+            self.waiting_set = self.idle_set
+
 class Pet():
-    # constructor for pet
     def __init__(self):
 
         # create a window
