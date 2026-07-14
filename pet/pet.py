@@ -205,9 +205,15 @@ class Pet():
         
         # INTERACTIONS
 
-        # Bind left button events for drag and click distinction
+        # Right Click = Halt
+        # Left Click = Walk / Reverse Walking direction
+        # C = Change skin
+
+
         self.label.bind("<ButtonPress-1>", self.move_pet)
         self.label.bind("<ButtonPress-3>", self.on_right_click)
+        self.label.bind("<Key-c>", self.change_skin)
+        self.label.bind("<Key-C>", self.change_skin)
         #self.label.bind("<B1-Motion>", self.do_drag)
         #self.label.bind("<ButtonRelease-1>", self.stop_drag_or_click)
 
@@ -273,6 +279,17 @@ class Pet():
 
     def on_right_click(self, event):
         self.controller.request_halt()
+
+    def change_skin(self, event):
+        # Switch to next skin (with wraparound) and reset animation 
+        self.current_skin_index = (self.current_skin_index + 1) % len(self.skins)
+        active_skin = self.skins[self.current_skin_index]
+    
+        self.load_skin(active_skin)
+
+        self.frame_index = 0
+        self.animation_counter = 0
+        self.update_animations()
 
     
     def update_animations(self):
