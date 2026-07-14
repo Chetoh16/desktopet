@@ -5,6 +5,11 @@ little pet for people who feel lonely
 # Changelog
 
 ## 13/07/26
+
+### Added
+- Left clicking while walking reverses direction.
+- Right click halts the pet.
+
 ### Changed
 - Implemented a `StateController` class to control and centralise state changes/transitions.
 - `timer_schedule` gate variable now replaced by a `pending_job` system where the action/event can be cancelled to give way to other events.
