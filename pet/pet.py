@@ -130,6 +130,8 @@ class Pet():
         self.crossed_arms_idle_frames = self.load_frames("assets/crossed_arms_idle", "idle_detective", 2)
         self.walking_left_frames = self.load_frames("assets/walking_left", "walking_left", 7)
         self.walking_right_frames = self.load_frames("assets/walking_right", "walking_right", 7)
+        
+        self.bird_walking_right_frames = self.load_frames("assets/birdguy/walking_right", "birdguy_walking_right", 10)
 
         # current frame of the animation, used to cycle through frames
         self.frame_index = 0
