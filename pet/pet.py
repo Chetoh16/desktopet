@@ -310,6 +310,17 @@ class Pet():
 
         self.window.update_idletasks()
 
+    # Other possible movements
+    def sit(self, event):
+        pass
+
+    def sleep(self, event):
+        pass
+
+    def explode(self, event):
+        pass
+
+
     
     def update_animations(self):
 
